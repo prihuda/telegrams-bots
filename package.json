@@ -1,0 +1,18 @@
+{
+  "name": "telegram-bot",
+  "version": "1.0.0",
+  "description": "telegram bot for online shopping",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
+  },
+  "author": "rafiqul",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.19.2",
+    "dotenv": "^8.2.0",
+    "midtrans-client": "^1.1.0",
+    "node-telegram-bot-api": "^0.40.0"
+  }
+}
