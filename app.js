@@ -8,7 +8,8 @@ const API_URL = process.env.API_URL;
 const Customer = 'api/v1/customer/';
 const Product = 'api/v1/product/';
 
-let cart = {};
+let cart = [];
+let total = 0;
 
 // Create Snap API instance
 let snap = new midtransClient.Snap({
@@ -153,18 +154,23 @@ bot.on("callback_query", function onCallbackQuery(callbackQuery) {
 						action: 'cart'
 					}
 	};
-  const opts = {
+  const opts1 = {
     chat_id: msg.chat.id,
     message_id: msg.message_id,
-		reply_markup: {
-			inline_keyboard: [[
-				{
-					text: "Add to Cart",
-					callback_data: JSON.stringify(x.cart)
-				}
-			]]
-		}
+	reply_markup: {
+		inline_keyboard: [[
+			{
+				text: "Add to Cart",
+				callback_data: JSON.stringify(x.cart)
+			}
+		]]
+	}
   };
+  const opts2 = {
+    chat_id: msg.chat.id,
+    message_id: msg.message_id,
+  };
+
   let text;
 	
 	axios.get(API_URL + Product + action.id)
@@ -172,11 +178,39 @@ bot.on("callback_query", function onCallbackQuery(callbackQuery) {
 			console.log(msg);
 			if (action.action == 'desc') {
 				text = msg.text + '\n' + response.data.data.description;
+				bot.editMessageText(text, opts1);
 			}
 			else {
-				
+				if (cart.length == 0) {
+					cart.push({
+						name: response.data.data.name,
+						price: response.data.data.price,
+						quantity: 1
+					});
+					text = "Product berhasil ditambahkan ke cart";
+					bot.editMessageText(text, opts2);
+					console.log(cart);
+				}
+				else {
+					let i = cart.findIndex(item => item.name == response.data.data.name);
+					if (i != -1) {
+						cart[i].quantity += 1;
+						text = "Product berhasil ditambahkan ke cart";
+						bot.editMessageText(text, opts2);
+						console.log(cart);
+					}
+					else {
+						cart.push({
+							name: response.data.data.name,
+							price: response.data.data.price,
+							quantity: 1
+						});
+						text = "Product berhasil ditambahkan ke cart";
+						bot.editMessageText(text, opts2);
+						console.log(cart);
+					}
+				}
 			}
-			bot.editMessageText(text, opts);
 			//bot.sendMessage(msg.chat.id, JSON.stringify(response.data.data, null, 2));
 		})
 		.catch(err => {
@@ -192,12 +226,21 @@ bot.on("callback_query", function onCallbackQuery(callbackQuery) {
   bot.editMessageText(text, opts); */
 });
 
+bot.onText(/\/checkcart/, msg => {
+	let data = JSON.stringify(cart);
+	for (let i = 0; i < cart.length; i++) {
+		total += cart[i].quantity * cart[i].price
+	}
+	bot.sendMessage(msg.chat.id, `*${data}*
+	TOTAL = *${total}*`, { parse_mode: "Markdown" });
+});
+
 
 bot.onText(/\/checkout/, async msg => {
   let parameter = {
     transaction_details: {
       order_id: `test-transaction-${Date.now()}`,
-      gross_amount: 200000
+      gross_amount: total
     },
     credit_card: {
       secure: true
